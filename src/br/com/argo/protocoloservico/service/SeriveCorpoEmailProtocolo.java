@@ -10,13 +10,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.sankhya.util.BigDecimalUtil;
+import com.sankhya.util.TimeUtils;
+
+import br.com.argo.protocoloservico.modal.ModalProtocoloServico;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.Registro;
 import br.com.sankhya.jape.EntityFacade;
+import br.com.sankhya.jape.bmp.PersistentLocalEntity;
 import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.core.JapeSession.SessionHandle;
 import br.com.sankhya.jape.dao.JdbcWrapper;
 import br.com.sankhya.jape.sql.NativeSql;
+import br.com.sankhya.jape.vo.DynamicVO;
+import br.com.sankhya.jape.vo.EntityVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.modelcore.auth.AuthenticationInfo;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
@@ -25,6 +32,7 @@ import br.com.sankhya.ws.ServiceContext;
 public class SeriveCorpoEmailProtocolo {
 	String msg;
 	ServiceEmailTeste servicoteste = new ServiceEmailTeste();
+	ModalProtocoloServico modelo = new ModalProtocoloServico ();
 	public void CorpoEmail(ContextoAcao ctx,String tabelaHtml) throws Exception {
 	    JdbcWrapper jdbc = JapeFactory.getEntityFacade().getJdbcWrapper();
 	    SessionHandle hnd = JapeSession.open();
@@ -35,57 +43,78 @@ public class SeriveCorpoEmailProtocolo {
 	    Timestamp dataAtual = new Timestamp(new Date().getTime());
 	    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	    String dataHoraAtualFormatada = sdf.format(dataAtual);
-	    String assunto = "Protocolo de solicitaÁ„o - ServiÁo";
+	    String assunto = "Protocolo de solicita√ß√£o - Servi√ßo";
 //	    String email = (String) ctx.getParam("EMAIL");
 	    String email =  null;
 	    // Construindo o valor a ser inserido no campo AD_PROTOCOLO
-        String infProtocolo = "Usu·rio: " + usuarioLogadoNome + " | ID: " + usuarioLogadoID + " | Data: " + dataHoraAtualFormatada;
+        String infProtocolo = "Usu√°rio: " + usuarioLogadoNome + " | ID: " + usuarioLogadoID + " | Data: " + dataHoraAtualFormatada;
 	    try {
 	        Registro[] linhas = ctx.getLinhas();
 	       
-	     // Mapa para consolidar anexos e descriÁıes por nota
-//	        Map<BigDecimal, List<byte[]>> anexosPorNota = new HashMap<>();
-//	        Map<BigDecimal, List<String>> descricoesPorNota = new HashMap<>();
-//	        for (Registro registro : linhas) {
-//	            BigDecimal nUnico = (BigDecimal) registro.getCampo("NUNOTA");
-//	            
-//	         // Inicializa as listas de anexos e descriÁıes para cada nota
-//	            anexosPorNota.putIfAbsent(nUnico, new ArrayList<>());
-//	            descricoesPorNota.putIfAbsent(nUnico, new ArrayList<>());
-//	            // Consulta para obter os bytes do PDF relacionados ao NUNOTA
-//	            ResultSet query = nativeSql.executeQuery(
-//	                "SELECT CODATA, CONTEUDO,DESCRICAO FROM TSIATA WHERE CODATA = " + nUnico
-//	            );
-//	            
-//	            while (query.next()) {
-//	            	byte[] pdfBytesAnexos = query.getBytes("CONTEUDO");
-//	                String descricao = query.getString("DESCRICAO");
-//	             
-//	                // Armazena anexos e descriÁıes por nota
-//	                anexosPorNota.get(nUnico).add(pdfBytesAnexos);
-//	                descricoesPorNota.get(nUnico).add(descricao);
-//	                // Adiciona descriÁ„o ao conte˙do do e-mail
-//	                
-//	            }
-//	         // Verificar se a nota n„o possui anexos
-//	            if (anexosPorNota.get(nUnico).isEmpty()) {
-//	                ctx.mostraErro("A nota " + nUnico + " n„o possui anexos. Por favor, adicione anexos antes de continuar.");
-//	                return; // Interrompe o processamento se alguma nota n„o possuir anexos
-//	            }
-//	        }
-	     // ConstruÁ„o do HTML consolidado
-//	        StringBuilder descricoesHtml = new StringBuilder();
-//	        for (BigDecimal nota : anexosPorNota.keySet()) {
-//	            descricoesHtml.append("<h3>Pedido: ").append(nota).append("</h3>")
-//	                          .append("<ul>");
-//
-//	            List<String> descricoes = descricoesPorNota.get(nota);
-//	            for (String descricao : descricoes) {
-//	                descricoesHtml.append("<li>").append(descricao).append("</li>");
-//	            }
-//
-//	            descricoesHtml.append("</ul>");
-//	        }
+//	      Mapa para consolidar anexos e descri√ß√µes por nota
+	        Map<BigDecimal, List<byte[]>> anexosPorNota = new HashMap<>();
+	        Map<BigDecimal, List<String>> descricoesPorNota = new HashMap<>();
+	        for (Registro registro : linhas) {
+	            BigDecimal nUnico = (BigDecimal) registro.getCampo("NUNOTA");
+	            
+	         // Inicializa as listas de anexos e descri√ß√µes para cada nota
+	            anexosPorNota.putIfAbsent(nUnico, new ArrayList<>());
+	            descricoesPorNota.putIfAbsent(nUnico, new ArrayList<>());
+	            // Consulta para obter os bytes do PDF relacionados ao NUNOTA
+	            ResultSet query = nativeSql.executeQuery(
+	                "SELECT CODATA, CONTEUDO,DESCRICAO FROM TSIATA WHERE CODATA = " + nUnico
+	            );
+	            
+	            while (query.next()) {
+	            	byte[] pdfBytesAnexos = query.getBytes("CONTEUDO");
+	                String descricao = query.getString("DESCRICAO");
+	             
+	                // Armazena anexos e descri√ß√µes por nota
+	                anexosPorNota.get(nUnico).add(pdfBytesAnexos);
+	                descricoesPorNota.get(nUnico).add(descricao);
+	                // Adiciona descri√ß√£o ao conte√∫do do e-mail
+	                query.close(); 
+	            }
+	         // Verificar se a nota n√£o possui anexos
+	            if (anexosPorNota.get(nUnico).isEmpty()) {
+	                ctx.mostraErro("A nota " + nUnico + " n√£o possui anexos. Por favor, adicione anexos antes de continuar.");
+	                return; // Interrompe o processamento se alguma nota n√£o possuir anexos
+	            }
+	        }
+	        
+//	      Constru√ß√£o do HTML consolidado
+	        StringBuilder descricoesHtml = new StringBuilder();
+	      
+	        
+	        // T√≠tulo da se√ß√£o se houver anexos
+	        if (!anexosPorNota.isEmpty()) {
+	            descricoesHtml.append("<h3 style='color:#1e6533; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 5px;'>")
+	                          .append(" Anexos Relacionados")
+	                          .append("</h3>");
+	    
+	            for (BigDecimal nota : anexosPorNota.keySet()) {
+	                // Card do Pedido
+	                descricoesHtml.append("<div style='background-color: #fcfcfc; border: 1px solid #e0e0e0; border-radius: 5px; padding: 15px; margin-bottom: 15px;'>");
+	                
+	                // Cabe√ßalho do Card
+	                descricoesHtml.append("<div style='font-weight: bold; color: #1e6533; margin-bottom: 10px; font-size: 14px;'>")
+	                              .append("Pedido N¬∫: ").append(nota)
+	                              .append("</div>");
+	    
+	                // Lista de arquivos
+	                descricoesHtml.append("<ul style='list-style-type: none; padding: 0; margin: 0;'>");
+	    
+	                List<String> descricoes = descricoesPorNota.get(nota);
+	                for (String descricao : descricoes) {
+	                    descricoesHtml.append("<li style='background-color: #fff; border-bottom: 1px solid #eee; padding: 8px; font-size: 13px; color: #555;'>")
+	                                  .append("<span style='margin-right: 8px;'></span>")
+	                                  .append("<b>Arquivo:</b> ").append(descricao)
+	                                  .append("</li>");
+	                }
+	                descricoesHtml.append("</ul>");
+	                descricoesHtml.append("</div>");
+	            }
+	        }
 	                // Monta o corpo do e-mail
 	        String mensagem = "<!DOCTYPE html>" +
 	        	    "<html>" +
@@ -95,7 +124,7 @@ public class SeriveCorpoEmailProtocolo {
 	        	    "    <style>" +
 	        	    "        body { font-family: Arial, sans-serif; color: #333; }" +
 	        	    
-	        	    // ESTILO DO CARD DE PROTOCOLO (Onde ficam as informaÁıes do usu·rio)
+	        	    // ESTILO DO CARD DE PROTOCOLO (Onde ficam as informa√ß√µes do usu√°rio)
 	        	    "        .protocolo-box {" +
 	        	    "            background-color: #f8f9fa;" + // Fundo cinza bem claro
 	        	    "            border-left: 6px solid #1e6533;" + // Faixa verde lateral
@@ -110,7 +139,7 @@ public class SeriveCorpoEmailProtocolo {
 	        	    "        }" +
 	        	    "        .label { font-weight: bold; color: #1e6533; }" +
 	        	    
-	        	    // ESTILO DA TABELA DE DADOS (Para garantir que fique bonita se n„o tiver estilo inline)
+	        	    // ESTILO DA TABELA DE DADOS (Para garantir que fique bonita se n√£o tiver estilo inline)
 	        	    "        .tabela-pedidos { width: 100%; border-collapse: collapse; margin-top: 10px; }" +
 	        	    "        .tabela-pedidos th { background-color: #1e6533; color: white; padding: 10px; }" +
 	        	    "        .tabela-pedidos td { border: 1px solid #ddd; padding: 8px; }" +
@@ -118,7 +147,7 @@ public class SeriveCorpoEmailProtocolo {
 	        	    "</head>" +
 	        	    "<body>" +
 	        	    
-	        	    // CABE«ALHO COM LOGO (Sem bordas, pois removemos o CSS global)
+	        	    // CABE√áALHO COM LOGO (Sem bordas, pois removemos o CSS global)
 	        	    "    <table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">" +
 	        	    "        <tr>" +
 	        	    "            <td align=\"center\" style=\"background-color:#1e6533; padding: 15px;\">" +
@@ -130,11 +159,11 @@ public class SeriveCorpoEmailProtocolo {
 	        	    "        </tr>" +
 	        	    "    </table>" +
 	        	    
-	        	    // TÕTULO E CARD DE INFORMA«’ES (Design Melhorado)
-	        	    "    <h2 style='color:#1e6533; border-bottom: 1px solid #ccc; padding-bottom: 5px;'>InformaÁıes do Protocolo</h2>" + 
+	        	    // T√çTULO E CARD DE INFORMA√á√ïES (Design Melhorado)
+	        	    "    <h2 style='color:#1e6533; border-bottom: 1px solid #ccc; padding-bottom: 5px;'>Informa√ß√µes do Protocolo</h2>" + 
 	        	    
 	        	    "    <div class='protocolo-box'>" +
-	        	    "        <div class='protocolo-item'><span class='label'>Usu·rio:</span> " + usuarioLogadoNome + "</div>" +
+	        	    "        <div class='protocolo-item'><span class='label'>Usu√°rio:</span> " + usuarioLogadoNome + "</div>" +
 	        	    "        <div class='protocolo-item'><span class='label'>ID:</span> " + usuarioLogadoID + "</div>" +
 	        	    "        <div class='protocolo-item'><span class='label'>Data:</span> " + dataHoraAtualFormatada + "</div>" +
 	        	    "    </div>" +
@@ -146,23 +175,24 @@ public class SeriveCorpoEmailProtocolo {
 	        	    // Importante: No controller, certifique-se que a table tenha estilos inline ou use a classe .tabela-pedidos se quiser usar o CSS daqui
 	        	    "    <div style='overflow-x:auto;'>" + 
 	        	             tabelaHtml + 
+	        	              descricoesHtml.toString() + // Descri√ß√µes separadas por nota
 	        	    "    </div>" +
 	        	    
 	        	    "</body>" +
 	        	    "</html>";
 	             // Envia o e-mail consolidado com todos os anexos
-//	                List<byte[]> todosAnexos = new ArrayList<>();
-//	                List<String> todosNomesArquivos = new ArrayList<>();
-//	                for (BigDecimal nota : anexosPorNota.keySet()) {
-//	                    todosAnexos.addAll(anexosPorNota.get(nota));
-//	                    for (String descricao : descricoesPorNota.get(nota)) {
-//	                        todosNomesArquivos.add(descricao);
-//	                    }
-//	                }
+	                List<byte[]> todosAnexos = new ArrayList<>();
+	                List<String> todosNomesArquivos = new ArrayList<>();
+	                for (BigDecimal nota : anexosPorNota.keySet()) {
+	                    todosAnexos.addAll(anexosPorNota.get(nota));
+	                    for (String descricao : descricoesPorNota.get(nota)) {
+	                        todosNomesArquivos.add(descricao);
+	                    }
+	                }
 	                // Envia o e-mail com a mensagem e anexo
-//	                enviarEmailComAnexos(dwfFacade, ctx, todosAnexos, todosNomesArquivos, assunto, mensagem);
+	                enviarEmailComAnexos(dwfFacade, ctx, todosAnexos, todosNomesArquivos, assunto, mensagem);
 	                
-	                servicoteste.enviarEmail(assunto, mensagem);
+//	                servicoteste.enviarEmail(assunto, mensagem);
 	            
 	        
 
@@ -175,4 +205,65 @@ public class SeriveCorpoEmailProtocolo {
 	        NativeSql.releaseResources(nativeSql);
 	    }
 	}
+	private void enviarEmailComAnexos(EntityFacade dwfEntityFacade, ContextoAcao contexto, 
+	        List<byte[]> anexos, List<String> nomesArquivos, String assunto, String mensagem) throws Exception {
+			BigDecimal codFila = null;
+			BigDecimal nuAnexo = null;
+			BigDecimal seq = null;
+			JdbcWrapper jdbc = JapeFactory.getEntityFacade().getJdbcWrapper();
+
+			NativeSql nativeSql = new NativeSql(jdbc);
+
+			try {
+				// Passo 1: Cria√ß√£o da Mensagem na MSDFilaMensagem para obter o CODFILA
+				DynamicVO dynamicVO1 = (DynamicVO) dwfEntityFacade.getDefaultValueObjectInstance("MSDFilaMensagem");
+				dynamicVO1.setProperty("ASSUNTO", assunto);
+				dynamicVO1.setProperty("CODMSG", null);
+				dynamicVO1.setProperty("DTENTRADA", TimeUtils.getNow());
+				dynamicVO1.setProperty("STATUS", "Pendente");
+				dynamicVO1.setProperty("CODCON", BigDecimal.ZERO);
+				dynamicVO1.setProperty("TENTENVIO", BigDecimalUtil.valueOf(3));
+				dynamicVO1.setProperty("MENSAGEM", mensagem.toCharArray());
+				dynamicVO1.setProperty("TIPOENVIO", "E");
+				dynamicVO1.setProperty("MAXTENTENVIO", BigDecimalUtil.valueOf(3));
+				dynamicVO1.setProperty("EMAIL", "natanael.lopes@argofruta.com");
+				dynamicVO1.setProperty("CODSMTP", null);
+				dynamicVO1.setProperty("CODUSUREMET",contexto.getUsuarioLogado());
+				dynamicVO1.setProperty("MIMETYPE", "text/html");
+				PersistentLocalEntity createEntity = dwfEntityFacade.createEntity("MSDFilaMensagem", (EntityVO) dynamicVO1);
+				codFila = ((DynamicVO) createEntity.getValueObject()).asBigDecimal("CODFILA");
+
+				// Passo 2: Cria√ß√£o dos Anexos na AnexoMensagem para obter os NUANEXO
+				// Anexo Invoice
+				 for (int i = 0; i < anexos.size(); i++) {
+				DynamicVO dynamicVO2Invoice = (DynamicVO) dwfEntityFacade.getDefaultValueObjectInstance("AnexoMensagem");
+				dynamicVO2Invoice.setProperty("ANEXO", anexos.get(i));
+				dynamicVO2Invoice.setProperty("NOMEARQUIVO", nomesArquivos.get(i) + ".pdf");
+				dynamicVO2Invoice.setProperty("TIPO", "application/pdf");
+				createEntity = dwfEntityFacade.createEntity("AnexoMensagem", (EntityVO) dynamicVO2Invoice);
+				nuAnexo = ((DynamicVO) createEntity.getValueObject()).asBigDecimal("NUANEXO");
+				 
+				// Passo 3: Associa√ß√£o dos Anexos √† Mensagem na TMDAXM
+				// Anexo Invoice
+				DynamicVO dynamicVO3Invoice = (DynamicVO) dwfEntityFacade.getDefaultValueObjectInstance("AnexoPorMensagem");
+				dynamicVO3Invoice.setProperty("CODFILA", codFila);
+				dynamicVO3Invoice.setProperty("NUANEXO", nuAnexo);
+				dwfEntityFacade.createEntity("AnexoPorMensagem", (EntityVO) dynamicVO3Invoice);
+				 }
+				String querySeq  = ("SELECT MAX(SEQUENCIA) + 1 AS SEQUENCIA FROM TMDFMD WHERE CODFILA = " + codFila);
+				ResultSet rsSeq = nativeSql.executeQuery(querySeq);
+				
+				while (rsSeq.next()) {
+					seq = rsSeq.getBigDecimal("SEQUENCIA");
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				msg = "Erro na cria√ß√£o da mensagem: " + e.getMessage();
+				contexto.setMensagemRetorno(msg);
+			}finally { 
+				JdbcWrapper.closeSession(jdbc); 
+				NativeSql.releaseResources(nativeSql);
+			}
+		}
 }

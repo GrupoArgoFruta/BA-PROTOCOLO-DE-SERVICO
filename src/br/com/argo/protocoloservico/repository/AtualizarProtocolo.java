@@ -29,7 +29,7 @@ public class AtualizarProtocolo {
 	            query.appendSql(update);
 
 	            // Construindo o valor a ser inserido no campo AD_PROTOCOLO
-	            String novoProtocolo = "Usu·rio: " + usuarioLogadoNome + " | ID: " + usuarioLogadoID + " | Data: " + dataAtual;
+	            String novoProtocolo = "Usuario: " + usuarioLogadoNome + " | ID: " + usuarioLogadoID + " | Data: " + dataAtual;
 
 	            // Definindo os par√¢metros nomeados
 	            query.setNamedParameter("AD_PROTSERVICO", novoProtocolo);
