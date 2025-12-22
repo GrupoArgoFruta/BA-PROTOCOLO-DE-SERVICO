@@ -16,7 +16,7 @@ public class AtualizarProtocolo {
 	        NativeSql query = null;
 	        try {
 	            // Montando a query de atualização
-	            String update = "UPDATE TGFCAB SET AD_PROTOCOLO = :AD_PROTOCOLO WHERE NUNOTA = :NUNOTA";
+	            String update = "UPDATE TGFCAB SET AD_PROTSERVICO = :AD_PROTSERVICO WHERE NUNOTA = :NUNOTA";
 
 	            hnd = JapeSession.open();
 	            hnd.setCanTimeout(false);
@@ -29,10 +29,10 @@ public class AtualizarProtocolo {
 	            query.appendSql(update);
 
 	            // Construindo o valor a ser inserido no campo AD_PROTOCOLO
-	            String novoProtocolo = "Usuário: " + usuarioLogadoNome + " | ID: " + usuarioLogadoID + " | Data: " + dataAtual;
+	            String novoProtocolo = "Usu�rio: " + usuarioLogadoNome + " | ID: " + usuarioLogadoID + " | Data: " + dataAtual;
 
 	            // Definindo os parâmetros nomeados
-	            query.setNamedParameter("AD_PROTOCOLO", novoProtocolo);
+	            query.setNamedParameter("AD_PROTSERVICO", novoProtocolo);
 	            query.setNamedParameter("NUNOTA", nUnico);
 
 	            query.executeUpdate(); // Executando o update
@@ -51,7 +51,7 @@ public class AtualizarProtocolo {
 	     NativeSql query = null;
 	     try {
 	    	// Montando a query de atualização
-	            String update = "UPDATE TGFCAB SET AD_DTPROCOLO = :AD_DTPROCOLO WHERE NUNOTA = :NUNOTA";
+	            String update = "UPDATE TGFCAB SET AD_DTPROCOSERVI = :AD_DTPROCOSERVI WHERE NUNOTA = :NUNOTA";
 	            hnd = JapeSession.open();
 	            hnd.setCanTimeout(false);
 	            hnd.setFindersMaxRows(-1);
@@ -63,7 +63,7 @@ public class AtualizarProtocolo {
 	            query.appendSql(update);
 	            
 	         // Definindo os parâmetros nomeados
-	            query.setNamedParameter("AD_DTPROCOLO", dataAtual);
+	            query.setNamedParameter("AD_DTPROCOSERVI", dataAtual);
 	            query.setNamedParameter("NUNOTA", nUnico);
 	            
 	            query.executeUpdate(); // Executando o update

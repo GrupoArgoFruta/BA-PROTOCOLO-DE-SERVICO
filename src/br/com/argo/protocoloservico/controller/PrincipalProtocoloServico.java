@@ -10,7 +10,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-
+import br.com.argo.protocoloservico.modal.ModalProtocoloServico;
+import br.com.argo.protocoloservico.repository.AtualizarProtocolo;
 import br.com.argo.protocoloservico.service.SeriveCorpoEmailProtocolo;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
@@ -26,7 +27,10 @@ import br.com.sankhya.modelcore.auth.AuthenticationInfo;
 import br.com.sankhya.ws.ServiceContext;
 
 public class PrincipalProtocoloServico implements AcaoRotinaJava{
+	//metodos auxiliares
 	SeriveCorpoEmailProtocolo envioCorpo = new SeriveCorpoEmailProtocolo();
+	AtualizarProtocolo atualizarProtocolo = new AtualizarProtocolo();
+	ModalProtocoloServico modelo = new ModalProtocoloServico ();
 	@Override
 	public void doAction(ContextoAcao ctx) throws Exception {
 		// TODO Auto-generated method stub
@@ -62,7 +66,7 @@ public class PrincipalProtocoloServico implements AcaoRotinaJava{
                       .append("</tr>");
             for (Registro registro : linhas) {
             	NativeSql nativeSql = new NativeSql(jdbc);
-	        	String infoProtocolo = (String) registro.getCampo("AD_PROTOCOLO");
+	        	String infoProtoservico = (String) registro.getCampo("AD_PROTSERVICO");
 	        	String tipmov = (String) registro.getCampo("TIPMOV");
 	        	BigDecimal codtop = (BigDecimal) registro.getCampo("CODTIPOPER");
 	        	Date dthroperacao = (Date) registro.getCampo("DHTIPOPER");
@@ -81,17 +85,47 @@ public class PrincipalProtocoloServico implements AcaoRotinaJava{
 	            String pendente  = (String) registro.getCampo("PENDENTE");
 	            BigDecimal vlrTotal = (BigDecimal) registro.getCampo("VLRNOTA");
 	            
-                //VALIDAÇOES execução
-	         
-	            if (tipmov == null || (!"J".equals(tipmov) )) {
-	                ctx.mostraErro(
-	                    "A nota " + nUnico +
-	                    " não pode ser processada!" +
-	                    "'. Apenas movimentos do tipo Pedido de Requisição são permitidos."
-	                );
-	            }
-
-               
+	            
+	         // Obtendo informações do parceiro
+	            JapeWrapper parcDAO = JapeFactory.dao("Parceiro");
+	            DynamicVO parcVO = parcDAO.findByPK(codparc);
+	            String razaosocial = parcVO.asString("RAZAOSOCIAL");
+	            String nomeparc = parcVO.asString("NOMEPARC");
+	            String reabrirProtocolo = parcVO.asString("AD_ATIVOPROSERVI");
+	            
+				// VALIDAÇÕES VISUAIS
+				// 1. Validação TOP (Pedido de Requisição - J)
+				if (tipmov == null || !"J".equals(tipmov)) {
+					modelo.tratarErro(ctx, "Movimento Inválido",
+							"A nota <b>" + nUnico + "</b> não pode ser processada.<br>"
+									+ "Apenas movimentos do tipo <b>Pedido de Requisição (J)</b> são permitidos.<br>"
+									+ "Tipo atual: " + (tipmov == null ? "Nulo" : tipmov));
+					return; // <--- OBRIGATÓRIO PARA PARAR A EXECUÇÃO
+				}
+				// 2. Validação Pendente
+				if (!"S".equals(pendente)) {
+					modelo.tratarErro(ctx, "Pendência Encontrada", "A nota <b>" + nUnico
+							+ "</b> não pode ser processada.<br>" + "O status de pendente deve ser 'SIM'.");
+					return;
+				}
+				// 3. Validação Status
+				if (!"L".equals(status)) {
+					modelo.tratarErro(ctx, "Status Inválido",
+							"A nota <b>" + nUnico + "</b> não pode ser processada.<br>"
+									+ "O status da nota deve ser <b>'Liberado' (L)</b>.<br>" + "Status atual: "
+									+ status);
+					return;
+				}
+				// 4. Validação Reenvio
+				if (infoProtoservico != null && !infoProtoservico.trim().isEmpty()) {
+					if (!"S".equals(reabrirProtocolo)) {
+						modelo.tratarErro(ctx, "Protocolo Já Gerado",
+								"O registro <b>" + nUnico + "</b> já foi enviado anteriormente.<br>"
+										+ "Não é permitido gerar um novo protocolo sem autorização de reabertura.");
+						return;
+					}
+				}
+			
                 // -------------------------------
 	         // Lógica de processamento
 	            numerosNotas.add(nUnico.toString());
@@ -100,15 +134,11 @@ public class PrincipalProtocoloServico implements AcaoRotinaJava{
 	            String existeRateio = verificarRateio(nUnico);
 	            
 	            
-                // Obtendo informações do parceiro
-	            JapeWrapper parcDAO = JapeFactory.dao("Parceiro");
-	            DynamicVO parcVO = parcDAO.findByPK(codparc);
-	            String razaosocial = parcVO.asString("RAZAOSOCIAL");
-	            String nomeparc = parcVO.asString("NOMEPARC");
-	            String reabrirProtocolo = parcVO.asString("AD_ATIVOPROTOCOLO");
+          
 	            
 	            
-	            
+	            atualizarProtocolo.atualizarInfoProtocolo(nUnico, usuarioLogadoNome, usuarioLogadoID, dataHoraAtualFormatada);
+                atualizarProtocolo.DataEnvioProtocolo(nUnico, dataAtual);
 	 
                 String mensagemStatus = obterMensagemStatus(status);
                 String valorFormatado = (vlrTotal != null) ? moedaFormat.format(vlrTotal) : "R$ 0,00";
@@ -214,6 +244,7 @@ public class PrincipalProtocoloServico implements AcaoRotinaJava{
 		    boolean existeRateio = rateioDAO.findOne("NUFIN = ?", nUnico) != null;
 		    return existeRateio ? "SIM" : "NÃO";
 		}
+
 
 }
 
