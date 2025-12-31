@@ -44,7 +44,7 @@ public class SeriveCorpoEmailProtocolo {
 	    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	    String dataHoraAtualFormatada = sdf.format(dataAtual);
 	    String assunto = "Protocolo de solicitação - Serviço";
-//	    String email = (String) ctx.getParam("EMAIL");
+
 	    String email =  null;
 	    // Construindo o valor a ser inserido no campo AD_PROTOCOLO
         String infProtocolo = "Usuário: " + usuarioLogadoNome + " | ID: " + usuarioLogadoID + " | Data: " + dataHoraAtualFormatada;
