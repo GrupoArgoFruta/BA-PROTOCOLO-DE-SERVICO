@@ -12,6 +12,7 @@ import java.util.Locale;
 
 import br.com.argo.protocoloservico.modal.ModalProtocoloServico;
 import br.com.argo.protocoloservico.repository.AtualizarProtocolo;
+import br.com.argo.protocoloservico.repository.HistoricoProtocoloPrincipal;
 import br.com.argo.protocoloservico.service.SeriveCorpoEmailProtocolo;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
@@ -31,6 +32,7 @@ public class PrincipalProtocoloServico implements AcaoRotinaJava{
 	SeriveCorpoEmailProtocolo envioCorpo = new SeriveCorpoEmailProtocolo();
 	AtualizarProtocolo atualizarProtocolo = new AtualizarProtocolo();
 	ModalProtocoloServico modelo = new ModalProtocoloServico ();
+	HistoricoProtocoloPrincipal hispedido = new HistoricoProtocoloPrincipal ();
 	@Override
 	public void doAction(ContextoAcao ctx) throws Exception {
 		// TODO Auto-generated method stub
@@ -67,21 +69,18 @@ public class PrincipalProtocoloServico implements AcaoRotinaJava{
             for (Registro registro : linhas) {
             	NativeSql nativeSql = new NativeSql(jdbc);
 	        	String infoProtoservico = (String) registro.getCampo("AD_PROTSERVICO");
-	        	String tipmov = (String) registro.getCampo("TIPMOV");
 	        	BigDecimal codtop = (BigDecimal) registro.getCampo("CODTIPOPER");
-	        	Date dthroperacao = (Date) registro.getCampo("DHTIPOPER");
 	            BigDecimal codparc = (BigDecimal) registro.getCampo("CODPARC");
 	            BigDecimal nUnico = (BigDecimal) registro.getCampo("NUNOTA");
 	            BigDecimal nUmnota = (BigDecimal) registro.getCampo("NUMNOTA");
 	            BigDecimal codcencus = (BigDecimal) registro.getCampo("CODCENCUS");
 	            BigDecimal codnat = (BigDecimal) registro.getCampo("CODNAT");
 	            BigDecimal codEmpresa = (BigDecimal) registro.getCampo("CODEMP");
-//	            Timestamp dataenvio = (Timestamp) registro.getCampo("AD_DTPROCOLO");
-	            String pedidoanual = (String) registro.getCampo("AD_PEDIDOANUAL");
-	            // Construindo o valor a ser inserido no campo AD_PROTOCOLO
+	            String pedidoanual = (String) registro.getCampo("AD_SOLANUALSERV");
+	            // Construindo o valor a ser inserido no campo AD_PROTSERVICO
 	            String infProtocolo = "Usuário: " + usuarioLogadoNome + " | ID: " + usuarioLogadoID + " | Data: " + dataHoraAtualFormatada;
 	            String status = (String) registro.getCampo("STATUSNOTA");
-	            String obs = (String) registro.getCampo("AD_OBS_PROTOCOLO");
+	       
 	            String pendente  = (String) registro.getCampo("PENDENTE");
 	            BigDecimal vlrTotal = (BigDecimal) registro.getCampo("VLRNOTA");
 	            
@@ -93,15 +92,33 @@ public class PrincipalProtocoloServico implements AcaoRotinaJava{
 	            String nomeparc = parcVO.asString("NOMEPARC");
 	            String reabrirProtocolo = parcVO.asString("AD_ATIVOPROSERVI");
 	            
+	            // Obtendo informações do Empresa
+	            JapeWrapper empDAO = JapeFactory.dao("Empresa");
+	            DynamicVO empreVO = empDAO.findByPK(codEmpresa);
+	            String nomeEmpre = empreVO.asString("NOMEFANTASIA");
+	            
+	            
+	         // Obtendo informações do CentroResultado
+	            JapeWrapper cencusDAO = JapeFactory.dao("CentroResultado");
+	            DynamicVO cencusVO = cencusDAO.findByPK(codcencus);
+	            String DescriCust = cencusVO.asString("DESCRCENCUS");
+	            
+	            
+	         // Obtendo informações do Natureza
+	            JapeWrapper natDAO = JapeFactory.dao("Natureza");
+	            DynamicVO naturezaVO = natDAO.findByPK(codnat);
+	            String descriNatureza = naturezaVO.asString("DESCRNAT");
+	            
 				// VALIDAÇÕES VISUAIS
-				// 1. Validação TOP (Pedido de Requisição - J)
-				if (tipmov == null || !"J".equals(tipmov)) {
-					modelo.tratarErro(ctx, "Movimento Inválido",
-							"A nota <b>" + nUnico + "</b> não pode ser processada.<br>"
-									+ "Apenas movimentos do tipo <b>Pedido de Requisição (J)</b> são permitidos.<br>"
-									+ "Tipo atual: " + (tipmov == null ? "Nulo" : tipmov));
-					return; // <--- OBRIGATÓRIO PARA PARAR A EXECUÇÃO
-				}
+	         // 1. Validação TOP (Deve ser 401)
+	            if (codtop == null || codtop.intValue() != 408) {
+	                // Aqui usamos codtop (minúsculo) igual declarado acima
+	                modelo.tratarErro(ctx, "TOP Inválida",
+	                        "A nota <b>" + nUnico + "</b> não pode ser processada.<br>"
+	                        + "Apenas a TOP <b>408</b> é permitida para este processo.<br>"
+	                        + "TOP atual da nota: <b>" + (codtop == null ? "Nula" : codtop) + "</b>");
+	                return; // <--- OBRIGATÓRIO PARA PARAR A EXECUÇÃO
+	            }
 				// 2. Validação Pendente
 				if (!"S".equals(pendente)) {
 					modelo.tratarErro(ctx, "Pendência Encontrada", "A nota <b>" + nUnico
@@ -124,21 +141,38 @@ public class PrincipalProtocoloServico implements AcaoRotinaJava{
 										+ "Não é permitido gerar um novo protocolo sem autorização de reabertura.");
 						return;
 					}
+					// 5. Validação de Parceiro Bloqueado (14508)
+		            if (codparc == null || codparc.intValue() == 14508) {
+		                modelo.tratarErro(ctx, "Parceiro Inválido",
+		                        "A nota <b>" + nUnico + "</b> não pode ser processada.<br>"
+		                        + "O parceiro atual (Cód. <b>" + (codparc == null ? "Nulo" : codparc) + "</b>) não permite o envio do protocolo.<br>"
+		                        + "<b>Ação necessária:</b> É preciso alterar o parceiro da nota para prosseguir.");
+		                return; // <--- OBRIGATÓRIO PARA PARAR A EXECUÇÃO
+		            }
 				}
 			
-                // -------------------------------
+                // -------------------------------AD_TGFHISTPROTOCOLO
 	         // Lógica de processamento
 	            numerosNotas.add(nUnico.toString());
 	            String descricaoAnexos = obterDescricoesAnexos(nativeSql, nUnico);
 	            String datasVencimento = obterDatasVencimento(nativeSql, nUnico);
 	            String existeRateio = verificarRateio(nUnico);
-	            
-	            
-          
-	            
-	            
-	            atualizarProtocolo.atualizarInfoProtocolo(nUnico, usuarioLogadoNome, usuarioLogadoID, dataHoraAtualFormatada);
-                atualizarProtocolo.DataEnvioProtocolo(nUnico, dataAtual);
+	            String ultimadescricao = obterUltimaDescricaoAnexo(nativeSql, nUnico);
+	                  
+             // Se for um pedido anual e AD_PROTSERVICO estiver nulo, atualiza a informação
+	            if ("S".equals(pedidoanual) && (infoProtoservico == null || infoProtoservico.trim().isEmpty())) {
+	                atualizarProtocolo.atualizarInfoProtocolo(nUnico, usuarioLogadoNome, usuarioLogadoID, dataHoraAtualFormatada);
+	                atualizarProtocolo.DataEnvioProtocolo(nUnico, dataAtual);
+	            }  // Se NÃO for um pedido anual, sempre atualiza a informação
+	            else if (!"S".equals(pedidoanual)) {
+	                atualizarProtocolo.atualizarInfoProtocolo(nUnico, usuarioLogadoNome, usuarioLogadoID, dataHoraAtualFormatada);
+	                atualizarProtocolo.DataEnvioProtocolo(nUnico, dataAtual);
+	            } 
+	         // Se for um pedido anual e AD_PROTSERVICO já estiver preenchido, apenas cria um histórico
+	            else if ("S".equals(pedidoanual) && infoProtoservico != null && !infoProtoservico.trim().isEmpty()) {
+	            	hispedido.lancarHistProtocolo(nUnico, nUmnota, infProtocolo, nomeparc, nomeEmpre, codEmpresa, 
+	                                    DescriCust,  descriNatureza, dataAtual, existeRateio, datasVencimento, vlrTotal,ultimadescricao);
+	            }
 	 
                 String mensagemStatus = obterMensagemStatus(status);
                 String valorFormatado = (vlrTotal != null) ? moedaFormat.format(vlrTotal) : "R$ 0,00";
@@ -244,13 +278,38 @@ public class PrincipalProtocoloServico implements AcaoRotinaJava{
 		    boolean existeRateio = rateioDAO.findOne("NUFIN = ?", nUnico) != null;
 		    return existeRateio ? "SIM" : "NÃO";
 		}
+	private String obterUltimaDescricaoAnexo(NativeSql nativeSql, BigDecimal nUnico) throws Exception {
+	    StringBuilder descricao = new StringBuilder();
+	    
+	    // Consulta SQL para pegar a última descrição com base na DTALTER
+//	    String sql = "SELECT DESCRICAO FROM TSIATA WHERE CODATA = :CODATA ORDER BY DTALTER DESC FETCH FIRST 1 ROW ONLY";
+	    
+	    String sql = "SELECT DESCRICAO FROM TSIATA " +
+                "WHERE CODATA = :CODATA " +
+                "AND DTINCLUSAO = (SELECT MAX(DTINCLUSAO) " +
+                                  "FROM TSIATA " +
+                                  "WHERE CODATA = :CODATA)";
+	    // Configuração dos parâmetros da consulta
+	    nativeSql.appendSql(sql);
+	    nativeSql.setNamedParameter("CODATA", nUnico);
+	    
+	    // Execução da consulta
+	    ResultSet query = nativeSql.executeQuery();
+	    
+	    // Processamento do resultado
+	    if (query.next()) {
+	        String descricaoAnexo = query.getString("DESCRICAO");
+	        if (descricaoAnexo != null && !descricaoAnexo.isEmpty()) {
+	            descricao.append(descricaoAnexo);
+	        }
+	    }
+	    
+	    // Retorno da descrição ou uma mensagem padrão caso não haja descrição
+	    return descricao.length() > 0 ? descricao.toString() : "Sem descrição";
+	}
 
 
 }
 
 
 
-// Obtendo informações do TIPO DE OPERAÇÃO
-//JapeWrapper topDAO = JapeFactory.dao("TipoOperacao");
-//DynamicVO topVO = topDAO.findByPK(codtop,dthroperacao);
-//String grupo = topVO.asString("GRUPO");
