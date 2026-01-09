@@ -197,7 +197,7 @@ public class SeriveCorpoEmailProtocolo {
 				dynamicVO1.setProperty("MENSAGEM", mensagem.toCharArray());
 				dynamicVO1.setProperty("TIPOENVIO", "E");
 				dynamicVO1.setProperty("MAXTENTENVIO", BigDecimalUtil.valueOf(3));
-				dynamicVO1.setProperty("EMAIL", "iranilde.moura@argofruta.com");
+				dynamicVO1.setProperty("EMAIL", "compras@argofruta.com");
 				dynamicVO1.setProperty("CODSMTP", null);
 				dynamicVO1.setProperty("CODUSUREMET",contexto.getUsuarioLogado());
 				dynamicVO1.setProperty("MIMETYPE", "text/html");
@@ -205,12 +205,47 @@ public class SeriveCorpoEmailProtocolo {
 				codFila = ((DynamicVO) createEntity.getValueObject()).asBigDecimal("CODFILA");
 
 				// Passo 2: Criação dos Anexos na AnexoMensagem para obter os NUANEXO
-				// Anexo Invoice
-				 for (int i = 0; i < anexos.size(); i++) {
+
+				for (int i = 0; i < anexos.size(); i++) {
+				    byte[] conteudo = anexos.get(i);
+				    String nomeOriginal = nomesArquivos.get(i);
+				    
+				    // Variáveis finais que vamos determinar
+				    String nomeFinal = (nomeOriginal != null) ? nomeOriginal : "Anexo_" + i;
+				    String mimeType = "application/pdf"; // Começamos com um padrão
+
+				    // --- LÓGICA DE DETECÇÃO (A Mágica acontece aqui) ---
+				    
+				    // 1. Verifica se é ZIP olhando os "Magic Bytes" (assinatura do arquivo)
+				    // Todo arquivo ZIP começa obrigatoriamente com os bytes 0x50 e 0x4B ('PK')
+				    boolean ehZipPeloConteudo = (conteudo.length >= 2 && conteudo[0] == 0x50 && conteudo[1] == 0x4B);
+				    
+				    // 2. Verifica se o nome já diz que é zip
+				    boolean temExtensaoZip = nomeFinal.toLowerCase().endsWith(".zip");
+
+				    if (ehZipPeloConteudo || temExtensaoZip) {
+				        // É UM ARQUIVO ZIP!
+				        mimeType = "application/zip";
+				        
+				        // Se o nome não tiver .zip, a gente adiciona para garantir que abra certo
+				        if (!temExtensaoZip) {
+				            nomeFinal += ".zip";
+				        }
+				    } else {
+				        // NÃO É ZIP (Assumimos PDF)
+				        mimeType = "application/pdf";
+				        
+				        // Se o nome não tiver .pdf, a gente adiciona
+				        if (!nomeFinal.toLowerCase().endsWith(".pdf")) {
+				            nomeFinal += ".pdf";
+				        }
+				    }
+
+				    // --- FIM DA LÓGICA, AGORA GRAVA NO BANCO ---
 				DynamicVO dynamicVO2Invoice = (DynamicVO) dwfEntityFacade.getDefaultValueObjectInstance("AnexoMensagem");
-				dynamicVO2Invoice.setProperty("ANEXO", anexos.get(i));
-				dynamicVO2Invoice.setProperty("NOMEARQUIVO", nomesArquivos.get(i) + ".pdf");
-				dynamicVO2Invoice.setProperty("TIPO", "application/pdf");
+				dynamicVO2Invoice.setProperty("ANEXO", conteudo);
+				dynamicVO2Invoice.setProperty("NOMEARQUIVO", nomeFinal);
+				dynamicVO2Invoice.setProperty("TIPO", mimeType);
 				createEntity = dwfEntityFacade.createEntity("AnexoMensagem", (EntityVO) dynamicVO2Invoice);
 				nuAnexo = ((DynamicVO) createEntity.getValueObject()).asBigDecimal("NUANEXO");
 				 
@@ -237,4 +272,72 @@ public class SeriveCorpoEmailProtocolo {
 				NativeSql.releaseResources(nativeSql);
 			}
 		}
+	
+	
+//	private void enviarEmailComAnexos(EntityFacade dwfEntityFacade, ContextoAcao contexto, 
+//	        List<byte[]> anexos, List<String> nomesArquivos, String assunto, String mensagem) throws Exception {
+//			BigDecimal codFila = null;
+//			BigDecimal nuAnexo = null;
+//			BigDecimal seq = null;
+//			JdbcWrapper jdbc = JapeFactory.getEntityFacade().getJdbcWrapper();
+//
+//			NativeSql nativeSql = new NativeSql(jdbc);
+//
+//			try {
+//				// Passo 1: Criação da Mensagem na MSDFilaMensagem para obter o CODFILA
+//				DynamicVO dynamicVO1 = (DynamicVO) dwfEntityFacade.getDefaultValueObjectInstance("MSDFilaMensagem");
+//				dynamicVO1.setProperty("ASSUNTO", assunto);
+//				dynamicVO1.setProperty("CODMSG", null);
+//				dynamicVO1.setProperty("DTENTRADA", TimeUtils.getNow());
+//				dynamicVO1.setProperty("STATUS", "Pendente");
+//				dynamicVO1.setProperty("CODCON", BigDecimal.ZERO);
+//				dynamicVO1.setProperty("TENTENVIO", BigDecimalUtil.valueOf(3));
+//				dynamicVO1.setProperty("MENSAGEM", mensagem.toCharArray());
+//				dynamicVO1.setProperty("TIPOENVIO", "E");
+//				dynamicVO1.setProperty("MAXTENTENVIO", BigDecimalUtil.valueOf(3));
+//				dynamicVO1.setProperty("EMAIL", "compras@argofruta.com");
+//				dynamicVO1.setProperty("CODSMTP", null);
+//				dynamicVO1.setProperty("CODUSUREMET",contexto.getUsuarioLogado());
+//				dynamicVO1.setProperty("MIMETYPE", "text/html");
+//				PersistentLocalEntity createEntity = dwfEntityFacade.createEntity("MSDFilaMensagem", (EntityVO) dynamicVO1);
+//				codFila = ((DynamicVO) createEntity.getValueObject()).asBigDecimal("CODFILA");
+//
+//				// Passo 2: Criação dos Anexos na AnexoMensagem para obter os NUANEXO
+//				// Decisão: Se tiver mais de 2 anexos, vamos ZIPAR. Caso contrário, envia solto.
+//	            boolean deveZipar = anexos.size() > 2;
+//				// Anexo Invoice
+//				 for (int i = 0; i < anexos.size(); i++) {
+//				DynamicVO dynamicVO2Invoice = (DynamicVO) dwfEntityFacade.getDefaultValueObjectInstance("AnexoMensagem");
+//				dynamicVO2Invoice.setProperty("ANEXO", anexos.get(i));
+//				dynamicVO2Invoice.setProperty("NOMEARQUIVO", nomesArquivos.get(i) + ".pdf");
+//				dynamicVO2Invoice.setProperty("TIPO", "application/pdf");
+//				createEntity = dwfEntityFacade.createEntity("AnexoMensagem", (EntityVO) dynamicVO2Invoice);
+//				nuAnexo = ((DynamicVO) createEntity.getValueObject()).asBigDecimal("NUANEXO");
+//				 
+//				// Passo 3: Associação dos Anexos à Mensagem na TMDAXM
+//				// Anexo Invoice
+//				DynamicVO dynamicVO3Invoice = (DynamicVO) dwfEntityFacade.getDefaultValueObjectInstance("AnexoPorMensagem");
+//				dynamicVO3Invoice.setProperty("CODFILA", codFila);
+//				dynamicVO3Invoice.setProperty("NUANEXO", nuAnexo);
+//				dwfEntityFacade.createEntity("AnexoPorMensagem", (EntityVO) dynamicVO3Invoice);
+//				 }
+//				String querySeq  = ("SELECT MAX(SEQUENCIA) + 1 AS SEQUENCIA FROM TMDFMD WHERE CODFILA = " + codFila);
+//				ResultSet rsSeq = nativeSql.executeQuery(querySeq);
+//				
+//				while (rsSeq.next()) {
+//					seq = rsSeq.getBigDecimal("SEQUENCIA");
+//				}
+//
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//				msg = "Erro na criação da mensagem: " + e.getMessage();
+//				contexto.setMensagemRetorno(msg);
+//			}finally { 
+//				JdbcWrapper.closeSession(jdbc); 
+//				NativeSql.releaseResources(nativeSql);
+//			}
+//		}
+	
+	
+	
 }
