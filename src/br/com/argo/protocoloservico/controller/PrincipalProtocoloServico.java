@@ -111,11 +111,11 @@ public class PrincipalProtocoloServico implements AcaoRotinaJava{
 	            
 				// VALIDAÇÕES VISUAIS
 	         // 1. Validação TOP (Deve ser 401)
-	            if (codtop == null || codtop.intValue() != 408) {
+	            if (codtop == null || codtop.intValue() != 408 && codtop.intValue() !=403) {
 	                // Aqui usamos codtop (minúsculo) igual declarado acima
 	                modelo.tratarErro(ctx, "TOP Inválida",
 	                        "A nota <b>" + nUnico + "</b> não pode ser processada.<br>"
-	                        + "Apenas a TOP <b>408</b> é permitida para este processo.<br>"
+	                        + "Apenas a TOP <b>408</b> ou <b>403</b> é permitidas para este processo.<br>"
 	                        + "TOP atual da nota: <b>" + (codtop == null ? "Nula" : codtop) + "</b>");
 	                return; // <--- OBRIGATÓRIO PARA PARAR A EXECUÇÃO
 	            }
@@ -141,15 +141,16 @@ public class PrincipalProtocoloServico implements AcaoRotinaJava{
 										+ "Não é permitido gerar um novo protocolo sem autorização de reabertura.");
 						return;
 					}
-					// 5. Validação de Parceiro Bloqueado (14508)
-		            if (codparc == null || codparc.intValue() == 14508) {
-		                modelo.tratarErro(ctx, "Parceiro Inválido",
-		                        "A nota <b>" + nUnico + "</b> não pode ser processada.<br>"
-		                        + "O parceiro atual (Cód. <b>" + (codparc == null ? "Nulo" : codparc) + "</b>) não permite o envio do protocolo.<br>"
-		                        + "<b>Ação necessária:</b> É preciso alterar o parceiro da nota para prosseguir.");
-		                return; // <--- OBRIGATÓRIO PARA PARAR A EXECUÇÃO
-		            }
+					
 				}
+				// 5. Validação de Parceiro Bloqueado (14508)
+	            if (codparc == null || codparc.intValue() == 14508) {
+	                modelo.tratarErro(ctx, "Parceiro Inválido",
+	                        "A nota <b>" + nUnico + "</b> não pode ser processada.<br>"
+	                        + "O parceiro atual (Cód. <b>" + (codparc == null ? "Nulo" : codparc) + "</b>) não permite o envio do protocolo.<br>"
+	                        + "<b>Ação necessária:</b> É preciso alterar o parceiro da nota para prosseguir.");
+	                return; // <--- OBRIGATÓRIO PARA PARAR A EXECUÇÃO
+	            }
 			
                 // -------------------------------AD_TGFHISTPROTOCOLO
 	         // Lógica de processamento
