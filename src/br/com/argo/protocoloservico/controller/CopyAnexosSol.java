@@ -31,7 +31,7 @@ public class CopyAnexosSol implements AcaoRotinaJava {
         }
 
         try {
-            // 1. Pega a Nota de Destino (onde o botão foi clicado)
+            // 1. Pega a Nota de Destino (onde o botão foi clicado) vai pegar o ultimo anexo somente
             BigDecimal nuNotaDestino = (BigDecimal) linhas[0].getCampo("NUNOTA");
 
             // 2. Pega a Nota de Origem (do parâmetro)

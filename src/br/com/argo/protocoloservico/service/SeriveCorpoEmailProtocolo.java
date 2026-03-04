@@ -43,7 +43,8 @@ public class SeriveCorpoEmailProtocolo {
 	    Timestamp dataAtual = new Timestamp(new Date().getTime());
 	    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	    String dataHoraAtualFormatada = sdf.format(dataAtual);
-	    String assunto = "Protocolo de solicitação - Serviço";
+	    String assunto = "Protocolo de Serviço";
+	    String txtNunotas = "";
 //	    String email = (String) ctx.getParam("EMAIL");
 	    String email =  null;
 	    // Construindo o valor a ser inserido no campo AD_PROTOCOLO
@@ -58,7 +59,11 @@ public class SeriveCorpoEmailProtocolo {
             // --- Loop pelas Linhas ---
             for (Registro registro : linhas) {
                 BigDecimal nUnico = (BigDecimal) registro.getCampo("NUNOTA");
-
+                if (txtNunotas.isEmpty()) {
+                    txtNunotas += nUnico;
+                } else {
+                    txtNunotas += ", " + nUnico;
+                }
                 // Inicializa listas
                 anexosPorNota.putIfAbsent(nUnico, new ArrayList<>());
                 nomesPorNota.putIfAbsent(nUnico, new ArrayList<>());
@@ -162,9 +167,9 @@ public class SeriveCorpoEmailProtocolo {
                 todosAnexos.addAll(anexosPorNota.get(nota));
                 todosNomesArquivos.addAll(nomesPorNota.get(nota));
             }
-
+            String assuntoFinal = assunto + " - Nro : " + txtNunotas;
             // Chama o método de envio (agora com certeza tem anexos)
-            enviarEmailComAnexos(dwfFacade, ctx, todosAnexos, todosNomesArquivos, assunto, mensagem);
+            enviarEmailComAnexos(dwfFacade, ctx, todosAnexos, todosNomesArquivos, assuntoFinal, mensagem);
 
         } catch (Exception e) {
             e.printStackTrace();
