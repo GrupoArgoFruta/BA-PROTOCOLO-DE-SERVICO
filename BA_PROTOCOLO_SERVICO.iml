@@ -19,87 +19,15 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="JavaSE-1.8" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library name="jape.jar">
-        <CLASSES>
-          <root url="file://$USER_HOME$/SDK/Bibliotecas-Sankya-Padroes-LIB-main/repo-bibliotecasJava/jape.jar" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="javax.ejb-api-3.2.jar">
-        <CLASSES>
-          <root url="file://$USER_HOME$/SDK/Bibliotecas-Sankya-Padroes-LIB-main/repo-bibliotecasJava/javax.ejb-api-3.2.jar" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="javax.servlet.jar">
-        <CLASSES>
-          <root url="file://$USER_HOME$/SDK/Bibliotecas-Sankya-Padroes-LIB-main/repo-bibliotecasJava/javax.servlet.jar" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="mgecom-model-client.jar">
-        <CLASSES>
-          <root url="file://$USER_HOME$/SDK/Bibliotecas-Sankya-Padroes-LIB-main/repo-bibliotecasJava/mgecom-model-client.jar" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="mge-modelcore.jar">
-        <CLASSES>
-          <root url="file://$USER_HOME$/SDK/Bibliotecas-Sankya-Padroes-LIB-main/repo-bibliotecasJava/mge-modelcore.jar" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="SankhyaW-extensions.jar">
-        <CLASSES>
-          <root url="file://$USER_HOME$/SDK/Bibliotecas-Sankya-Padroes-LIB-main/repo-bibliotecasJava/SankhyaW-extensions.jar" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="sanutil.jar">
-        <CLASSES>
-          <root url="file://$USER_HOME$/SDK/Bibliotecas-Sankya-Padroes-LIB-main/repo-bibliotecasJava/sanutil.jar" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="sanws.jar">
-        <CLASSES>
-          <root url="file://$USER_HOME$/SDK/Bibliotecas-Sankya-Padroes-LIB-main/repo-bibliotecasJava/sanws.jar" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="library" name="javax.ejb-api-3.2" level="project" />
-    <orderEntry type="library" name="sanutil" level="project" />
-    <orderEntry type="library" name="mge-modelcore" level="project" />
-    <orderEntry type="library" name="SankhyaW-extensions" level="project" />
-    <orderEntry type="library" name="mgecom-model-client" level="project" />
-    <orderEntry type="library" name="jape" level="project" />
-    <orderEntry type="library" name="javax.servlet" level="project" />
-    <orderEntry type="library" name="sanws" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="javax.ejb-api-3.2" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="sanutil" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="mge-modelcore" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="SankhyaW-extensions" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="mgecom-model-client" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="jape" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="javax.servlet" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="sanws" level="project" />
   </component>
 </module>

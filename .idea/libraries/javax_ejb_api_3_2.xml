@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="javax.ejb-api-3.2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../../../SDK/Bibliotecas-Sankya-Padroes-LIB-main/javax.ejb-api-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../../SDK/Bibliotecas-Sankya-Padroes-LIB-main/repo-bibliotecasJava/jape.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

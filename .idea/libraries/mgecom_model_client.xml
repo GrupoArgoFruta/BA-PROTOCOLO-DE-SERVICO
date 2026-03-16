@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="mgecom-model-client">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../../../SDK/Bibliotecas-Sankya-Padroes-LIB-main/repo-bibliotecasJava/mgecom-model-client.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

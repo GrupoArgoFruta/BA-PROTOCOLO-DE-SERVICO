@@ -28,7 +28,7 @@ public class HistoricoProtocoloPrincipal{
 		JapeWrapper hisDAO = JapeFactory.dao("AD_THPS");
 		try {
 			
-			hnd = JapeSession.open(); // Abertura da sessão do JapeSession
+			hnd = JapeSession.open(); // Abertura da sessï¿½o do JapeSession
 			DynamicVO histoVo = hisDAO.create()
 				.set("NUNOTA", nUnico)
 				.set("NUMNOTA", nUmnota)

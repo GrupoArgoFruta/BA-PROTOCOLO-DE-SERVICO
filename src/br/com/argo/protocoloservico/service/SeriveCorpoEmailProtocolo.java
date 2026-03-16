@@ -1,5 +1,4 @@
 package br.com.argo.protocoloservico.service;
-
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
@@ -43,7 +42,7 @@ public class SeriveCorpoEmailProtocolo {
 	    Timestamp dataAtual = new Timestamp(new Date().getTime());
 	    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	    String dataHoraAtualFormatada = sdf.format(dataAtual);
-	    String assunto = "Protocolo de solicitação - Serviço";
+		String assunto = "Protocolo de solicita\u00E7\u00E3o - Servi\u00E7o";
 
 	    String email =  null;
 	    // Construindo o valor a ser inserido no campo AD_PROTOCOLO
@@ -64,35 +63,40 @@ public class SeriveCorpoEmailProtocolo {
                 nomesPorNota.putIfAbsent(nUnico, new ArrayList<>());
 
                 // Query buscando o ARQUIVO e o CONTEUDO
-                ResultSet query = nativeSql.executeQuery(
-                    "SELECT CODATA, CONTEUDO, DESCRICAO FROM TSIATA WHERE CODATA = " + nUnico
-                );
+//                ResultSet query = nativeSql.executeQuery(
+//                    "SELECT CODATA, CONTEUDO, DESCRICAO FROM TSIATA WHERE CODATA = " + nUnico
+//                );
+
+				nativeSql.resetSqlBuf();
+				nativeSql.appendSql(
+						"SELECT CODATA, CONTEUDO, DESCRICAO FROM TSIATA " +
+								"WHERE CODATA = :CODATA " +
+								"AND DTINCLUSAO = (SELECT MAX(DTINCLUSAO) FROM TSIATA WHERE CODATA = :CODATA)"
+				);
+				nativeSql.setNamedParameter("CODATA", nUnico);
+				ResultSet query = nativeSql.executeQuery();
 
                 boolean encontrouAnexoValidoNestaNota = false; // Flag para controlar se achou algo nesta nota
+				if (query.next()) {
+					byte[] conteudoAnexo = query.getBytes("CONTEUDO");
+					String nomeArquivo = query.getString("DESCRICAO");
 
-                while (query.next()) {
-                    byte[] conteudoAnexo = query.getBytes("CONTEUDO");
-                    String nomeArquivo = query.getString("DESCRICAO");
+					if (conteudoAnexo != null && conteudoAnexo.length > 0) {
+						encontrouAnexoValidoNestaNota = true;
+						anexosPorNota.get(nUnico).add(conteudoAnexo);
 
-                    // Verifica se o CONTEUDO realmente existe (não é nulo e tem tamanho)
-                    if (conteudoAnexo != null && conteudoAnexo.length > 0) {
-                        encontrouAnexoValidoNestaNota = true; // Marcou que achou!
-                        
-                        anexosPorNota.get(nUnico).add(conteudoAnexo);
-
-                        // Tratamento do Nome
-                        if (nomeArquivo == null || nomeArquivo.trim().isEmpty()) {
-                            nomeArquivo = "Anexo_Nota_" + nUnico + ".pdf";
-                        }
-                        nomesPorNota.get(nUnico).add(nomeArquivo);
-                    } else {
-                        // BLOQUEIO 1: Existe registro na tabela, mas o binário está vazio
-                        query.close(); // Fecha antes de sair
-                        ctx.mostraErro("Erro na Nota " + nUnico + ": O anexo '" + nomeArquivo + "' existe mas o conteúdo está vazio. Verifique se foi salvo corretamente no Banco de Dados.");
-                        return; // <--- ISSO PARA O PROCESSO IMEDIATAMENTE
-                    }
-                }
-                query.close();
+						if (nomeArquivo == null || nomeArquivo.trim().isEmpty()) {
+							nomeArquivo = "Anexo_Nota_" + nUnico + ".pdf";
+						}
+						nomesPorNota.get(nUnico).add(nomeArquivo);
+					} else {
+						query.close();
+						ctx.mostraErro("Erro na Nota " + nUnico + ": O anexo '" + nomeArquivo
+								+ "' existe mas o conteúdo está vazio.");
+						return;
+					}
+				}
+				query.close();
 
                 // BLOQUEIO 2: Não encontrou nenhum anexo válido para a nota atual
                 if (!encontrouAnexoValidoNestaNota) {
@@ -113,7 +117,7 @@ public class SeriveCorpoEmailProtocolo {
             for (BigDecimal nota : anexosPorNota.keySet()) {
                 descricoesHtml.append("<div style='background-color: #fcfcfc; border: 1px solid #e0e0e0; border-radius: 5px; padding: 15px; margin-bottom: 15px;'>");
                 descricoesHtml.append("<div style='font-weight: bold; color: #1e6533; margin-bottom: 10px; font-size: 14px;'>")
-                              .append("Pedido Nº: ").append(nota)
+						       .append("Pedido N&ordm;: ").append(nota)
                               .append("</div>");
                 descricoesHtml.append("<ul style='list-style-type: none; padding: 0; margin: 0;'>");
 
@@ -140,9 +144,9 @@ public class SeriveCorpoEmailProtocolo {
                     "    </style>" +
                     "</head>" +
                     "<body>" +
-                    "    <h2 style='color:#1e6533;'>Informações do Protocolo Serviço</h2>" +
+                    "    <h2 style='color:#1e6533;'>Informa&ccedil;&otilde;es do Protocolo Servi&ccedil;o</h2>" +
                     "    <div class='protocolo-box'>" +
-                    "        <div class='protocolo-item'><span class='label'>Usuário:</span> " + usuarioLogadoNome + "</div>" +
+                    "        <div class='protocolo-item'><span class='label'>Usuario:</span> " + usuarioLogadoNome + "</div>" +
                     "        <div class='protocolo-item'><span class='label'>ID:</span> " + usuarioLogadoID + "</div>" +
                     "        <div class='protocolo-item'><span class='label'>Data:</span> " + dataHoraAtualFormatada + "</div>" +
                     "    </div>" +
@@ -197,10 +201,12 @@ public class SeriveCorpoEmailProtocolo {
 				dynamicVO1.setProperty("MENSAGEM", mensagem.toCharArray());
 				dynamicVO1.setProperty("TIPOENVIO", "E");
 				dynamicVO1.setProperty("MAXTENTENVIO", BigDecimalUtil.valueOf(3));
-				dynamicVO1.setProperty("EMAIL", "iranilde.moura@argofruta.com");
+				dynamicVO1.setProperty("EMAIL", "compras@argofruta.com");
+//				dynamicVO1.setProperty("EMAIL", "natanael.lopes@argofruta.com");
 				dynamicVO1.setProperty("CODSMTP", null);
 				dynamicVO1.setProperty("CODUSUREMET",contexto.getUsuarioLogado());
-				dynamicVO1.setProperty("MIMETYPE", "text/html");
+//				dynamicVO1.setProperty("MIMETYPE", "text/html");
+				dynamicVO1.setProperty("MIMETYPE", "text/html; charset=UTF-8");
 				PersistentLocalEntity createEntity = dwfEntityFacade.createEntity("MSDFilaMensagem", (EntityVO) dynamicVO1);
 				codFila = ((DynamicVO) createEntity.getValueObject()).asBigDecimal("CODFILA");
 

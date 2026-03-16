@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="BA_PROTOCOLO_SERVICO:jar">
+    <output-path>$USER_HOME$/eclipse-workspace/Jars/BA-PROTOCOLO-SERVICO</output-path>
+    <root id="archive" name="BA_PROTOCOLO_SERVICO.jar">
+      <element id="module-output" name="BA_PROTOCOLO_SERVICO" />
+    </root>
+  </artifact>
+</component>
